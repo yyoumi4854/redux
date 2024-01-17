@@ -3,30 +3,71 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 
-/* 예제 1 */
-// import "./execise";
-
-/* 예제 2 */
-import { createStore } from "redux";
+import { applyMiddleware, createStore } from "redux";
 import { Provider } from "react-redux";
 import rootReducer from "./modules";
+import myLogger from "./middlewares/myLogger";
+import logger from "redux-logger";
+import { composeWithDevTools } from "redux-devtools-extension";
+import * as ReduxThunk from "redux-thunk";
+import { BrowserRouter } from "react-router-dom";
 
-/* 리덕스 개발자도구 적용 */
-import { composeWithDevTools } from "redux-devtools-extension"; // 리덕스 개발자도구
+// const store = createStore(rootReducer, applyMiddleware(myLogger, logger)); // 여러개의 미들웨어 적용 가능
 
-// 예제2. 스토어 만들기
-const store = createStore(rootReducer, composeWithDevTools()); // 스토어를 만듦
-// composeWithDevTools를 사용하여 리덕스 개발자 도구 활성화
+/*
+const store = createStore(
+  rootReducer,
+  composeWithDevTools(applyMiddleware(logger))
+); // myLogger 비활성화(불필요)
+ */
+
+/*
+const store = createStore(
+  rootReducer,
+  // logger를 사용하는 경우, logger가 가장 마지막에 와야 된다.
+  composeWithDevTools(applyMiddleware(ReduxThunk.thunk, logger))
+); // 여러개의 미들웨어 적용 가능
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
-// Provider로 store를 넣어서 App을 감싸게 되면 렌더링하는 그 어떤 컴포넌트던지 리덕스 스토어에 접근 가능
 root.render(
   <React.StrictMode>
+    <BrowserRouter>
+      <Provider store={store}>
+        <App />
+      </Provider>
+    </BrowserRouter>
+  </React.StrictMode>
+);
+ */
+
+import { Router } from "react-router-dom";
+import { createBrowserHistory } from "history";
+
+// const customHistory = createBrowserHistory();
+
+const store = createStore(
+  rootReducer,
+  // logger 를 사용하는 경우, logger가 가장 마지막에 와야합니다.
+  composeWithDevTools(
+    applyMiddleware(
+      ReduxThunk.withExtraArgument({ history: customHistory }),
+      logger
+    )
+  )
+); // 여러개의 미들웨어를 적용 할 수 있습니다.
+
+const customHistory = createBrowserHistory();
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+ReactDOM.render(
+  <Router history={customHistory}>
     <Provider store={store}>
       <App />
     </Provider>
-  </React.StrictMode>
+  </Router>,
+  document.getElementById("root")
 );
 
 reportWebVitals();
